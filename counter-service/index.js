@@ -4,15 +4,11 @@ const redis = require("redis");
 const PORT = process.env.PORT || 3001;
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost";
 const KEY_PREFIX = "views:";
-const OBJECT_ID = /^[0-9a-fA-F]{24}$/;
+const OBJECT_ID = /^[0-9a-f]{24}$/;
 
 const redisClient = redis.createClient({
   url: REDIS_URL,
 });
-
-(async () => {
-  await redisClient.connect();
-})();
 
 const app = express();
 
@@ -38,6 +34,14 @@ app.post("/counter/:bookId/incr", async (req, res) => {
   res.json({ status: "ok", count });
 });
 
-app.listen(PORT, () => {
-  console.log(`Counter service listening on port ${PORT}`);
-});
+if (require.main === module) {
+  (async () => {
+    await redisClient.connect();
+  })();
+
+  app.listen(PORT, () => {
+    console.log(`Counter service listening on port ${PORT}`);
+  });
+}
+
+module.exports = { app, redisClient, KEY_PREFIX, OBJECT_ID };
